@@ -8,6 +8,7 @@ namespace Owpini.EntityFramework
         public OwpiniDbContext(DbContextOptions<OwpiniDbContext> options)
             :base(options)
         {
+            Database.Migrate();
         }
         public DbSet<Business> Businesses { get; set; }
     }
