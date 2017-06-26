@@ -22,7 +22,7 @@ namespace Owpini.EntityFramework.SeedData
                      Name = "In n Out"
                 },
                 new Business{
-                    Id = new Guid("a3749477-f823-4124-aa4a-fc9ad5e79cd6"),
+                    Id = new Guid("a5855f55-7eb6-4e9e-b1a3-f1b38dd494f4"),
                      Name = "Panda Express"
                 }
 
