@@ -6,6 +6,7 @@ using Owpini.Core.Business.Dtos;
 using Owpini.Core.Business;
 using Owpini.API.Helpers;
 using Microsoft.AspNetCore.JsonPatch;
+using System.Collections.Generic;
 
 namespace Owpini.API.Controllers
 {
@@ -19,6 +20,15 @@ namespace Owpini.API.Controllers
         {
             _owpiniRepository = owpiniRepository;
             _urlHelper = urlHelper;
+        }
+
+        // GET api/values
+        [HttpGet]
+        public IActionResult Get()
+        {
+            var top5Business = _owpiniRepository.GetBusinesses();
+            var businesses = Mapper.Map<IEnumerable<BusinessDto>>(top5Business);
+            return Ok(businesses);
         }
 
         [HttpGet("{id}", Name = "GetBusiness")]

@@ -1,6 +1,7 @@
 ﻿using System;
 using Owpini.Core.Business;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Owpini.EntityFramework.EntityFramework.Repositories
 {
@@ -27,6 +28,11 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
         public Business GetBusiness(Guid businessId)
         {
             return _context.Businesses.FirstOrDefault(b => b.Id == businessId);
+        }
+
+        public IEnumerable<Business> GetBusinesses()
+        {
+            return _context.Businesses.Take(5);
         }
 
         public bool Save()
