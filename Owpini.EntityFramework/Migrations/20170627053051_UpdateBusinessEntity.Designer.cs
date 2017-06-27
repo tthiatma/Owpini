@@ -8,9 +8,10 @@ using Owpini.EntityFramework;
 namespace Owpini.EntityFramework.Migrations
 {
     [DbContext(typeof(OwpiniDbContext))]
-    partial class OwpiniDbContextModelSnapshot : ModelSnapshot
+    [Migration("20170627053051_UpdateBusinessEntity")]
+    partial class UpdateBusinessEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.2")

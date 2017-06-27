@@ -66,6 +66,11 @@ namespace Owpini.API
             AutoMapper.Mapper.Initialize(cfg =>
             {
                 cfg.CreateMap<Business, BusinessDto>();
+                cfg.CreateMap<Business, BusinessForUpdateDto>();
+                cfg.CreateMap<BusinessDto, Business>();
+                cfg.CreateMap<BusinessForCreationDto, Business>();
+                cfg.CreateMap<BusinessForUpdateDto, Business>();
+
             });
 
             owpiniDbContext.EnsureSeedDataForContext();

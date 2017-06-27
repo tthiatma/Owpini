@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Owpini.Core.Business;
 using System.Linq;
 
@@ -14,10 +12,31 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
         {
             _context = context;
         }
-            
+
+        public void AddBusiness(Business business)
+        {
+            business.Id = Guid.NewGuid();
+            _context.Businesses.Add(business);
+        }
+
+        public bool BusinessExists(Guid businessId)
+        {
+            return _context.Businesses.Any(b => b.Id == businessId);
+        }
+
         public Business GetBusiness(Guid businessId)
         {
             return _context.Businesses.FirstOrDefault(b => b.Id == businessId);
+        }
+
+        public bool Save()
+        {
+            return (_context.SaveChanges() >= 0);
+        }
+
+        public void UpdateBusiness(Business business)
+        {
+            //no code in this implementation
         }
     }
 }
