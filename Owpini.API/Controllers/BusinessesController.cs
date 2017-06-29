@@ -23,12 +23,11 @@ namespace Owpini.API.Controllers
         }
 
         // GET api/values
-        [HttpGet]
-        public IActionResult Get()
+        [HttpGet(Name = "GetBusinesses")]
+        public IActionResult GetBusinesses(BusinessesResourceParameters bizResourceParam)
         {
-            var top5Business = _owpiniRepository.GetBusinesses();
-            var businesses = Mapper.Map<IEnumerable<BusinessDto>>(top5Business);
-            return Ok(businesses);
+            //if(!_)
+            return Ok();
         }
 
         [HttpGet("{id}", Name = "GetBusiness")]

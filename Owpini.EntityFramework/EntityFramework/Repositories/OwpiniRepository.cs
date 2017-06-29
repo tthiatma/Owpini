@@ -2,6 +2,7 @@
 using Owpini.Core.Business;
 using System.Linq;
 using System.Collections.Generic;
+using Owpini.API.Helpers;
 
 namespace Owpini.EntityFramework.EntityFramework.Repositories
 {
@@ -34,6 +35,12 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
         {
             return _context.Businesses.Take(5);
         }
+
+        //public PagedList<Business> GetBusinesses(BusinessesResourceParameters businessResourceParameters)
+        //{
+        //    var collectionBeforeMapping = 
+        //        _context.Businesses.ApplySort
+        //}
 
         public bool Save()
         {
