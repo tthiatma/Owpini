@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Owpini.Core.Business.Dtos
+namespace Owpini.Core.Businesses.Dtos
 {
     public abstract class BusinessForManipulationDto
     {

@@ -14,8 +14,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Owpini.EntityFramework.SeedData;
-using Owpini.Core.Business.Dtos;
-using Owpini.Core.Business;
+using Owpini.Core.Businesses.Dtos;
+using Owpini.Core.Businesses;
 
 namespace Owpini.API
 {

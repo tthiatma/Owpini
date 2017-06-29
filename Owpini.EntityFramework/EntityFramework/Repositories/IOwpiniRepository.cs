@@ -1,5 +1,5 @@
 ﻿using Owpini.API.Helpers;
-using Owpini.Core.Business;
+using Owpini.Core.Businesses;
 using System;
 using System.Collections.Generic;
 
@@ -7,7 +7,7 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
 {
     public interface IOwpiniRepository
     {
-        //PagedList<Business> GetBusinesses(BusinessesResourceParameters businessResourceParameters);
+        PagedList<Business> GetBusinesses(BusinessesResourceParameters businessResourceParameters);
         IEnumerable<Business> GetBusinesses();
         Business GetBusiness(Guid businessId);
         void AddBusiness(Business business);

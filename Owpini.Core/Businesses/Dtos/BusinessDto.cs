@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Owpini.Core.Business.Dtos
+namespace Owpini.Core.Businesses.Dtos
 {
     public class BusinessDto
     {

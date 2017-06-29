@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Owpini.Core.Business;
+using Owpini.Core.Businesses;
 
 namespace Owpini.EntityFramework
 {

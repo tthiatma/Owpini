@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Owpini.Core.Business.Dtos
+namespace Owpini.Core.Businesses.Dtos
 {
     public class BusinessForUpdateDto : BusinessForManipulationDto
     {

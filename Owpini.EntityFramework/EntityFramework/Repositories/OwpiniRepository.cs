@@ -1,5 +1,5 @@
 ﻿using System;
-using Owpini.Core.Business;
+using Owpini.Core.Businesses;
 using System.Linq;
 using System.Collections.Generic;
 using Owpini.API.Helpers;
@@ -36,11 +36,27 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
             return _context.Businesses.Take(5);
         }
 
-        //public PagedList<Business> GetBusinesses(BusinessesResourceParameters businessResourceParameters)
-        //{
-        //    var collectionBeforeMapping = 
-        //        _context.Businesses.ApplySort
-        //}
+        public PagedList<Business> GetBusinesses(BusinessesResourceParameters businessResourceParameters)
+        {
+            var collectionBeforePaging =
+                _context.Businesses
+                .OrderBy(b => b.Name)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(businessResourceParameters.SearchQuery))
+            {
+                var searchQueryForWhereClause = businessResourceParameters.SearchQuery
+                    .Trim().ToLowerInvariant();
+
+                collectionBeforePaging = collectionBeforePaging
+                    .Where(b => b.Name.Contains(searchQueryForWhereClause));
+            }
+
+            return PagedList<Business>.Create(collectionBeforePaging,
+                businessResourceParameters.PageNumber,
+                businessResourceParameters.PageSize);
+
+        }
 
         public bool Save()
         {
