@@ -2,9 +2,10 @@
 using Owpini.Core.Businesses;
 using System.Linq;
 using System.Collections.Generic;
-using Owpini.API.Helpers;
 using Owpini.Core.Businesses.Dtos;
 using Owpini.EntityFramework.Helpers;
+using Owpini.Core.OwpiniEvents;
+using Owpini.Core.OwpiniEvents.Dtos;
 
 namespace Owpini.EntityFramework.EntityFramework.Repositories
 {
@@ -40,14 +41,14 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
             return _context.Businesses.Take(5);
         }
 
-        public PagedList<Business> GetBusinesses(BusinessesResourceParameters businessResourceParameters)
+        public PagedList<Business> GetBusinesses(CommonResourceParameters commonResourceParameters)
         {
             var collectionBeforePaging =
-                _context.Businesses.ApplySort(businessResourceParameters.OrderBy, _propertyMappingService.GetPropertyMapping<BusinessDto, Business>());
+                _context.Businesses.ApplySort(commonResourceParameters.OrderBy, _propertyMappingService.GetPropertyMapping<BusinessDto, Business>());
 
-            if (!string.IsNullOrEmpty(businessResourceParameters.SearchQuery))
+            if (!string.IsNullOrEmpty(commonResourceParameters.SearchQuery))
             {
-                var searchQueryForWhereClause = businessResourceParameters.SearchQuery
+                var searchQueryForWhereClause = commonResourceParameters.SearchQuery
                     .Trim().ToLowerInvariant();
 
                 collectionBeforePaging = collectionBeforePaging
@@ -55,9 +56,28 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
             }
 
             return PagedList<Business>.Create(collectionBeforePaging,
-                businessResourceParameters.PageNumber,
-                businessResourceParameters.PageSize);
+                commonResourceParameters.PageNumber,
+                commonResourceParameters.PageSize);
 
+        }
+
+        public PagedList<OwpiniEvent> GetOwpiniEvents(CommonResourceParameters commonResourceParameters)
+        {
+            var collectionBeforePaging =
+                _context.OwpiniEvents.ApplySort(commonResourceParameters.OrderBy);
+
+            if (!string.IsNullOrEmpty(commonResourceParameters.SearchQuery))
+            {
+                var searchQueryForWhereClause = commonResourceParameters.SearchQuery
+                    .Trim().ToLowerInvariant();
+
+                collectionBeforePaging = collectionBeforePaging
+                    .Where(b => b.Name.Contains(searchQueryForWhereClause));
+            }
+
+            return PagedList<OwpiniEvent>.Create(collectionBeforePaging,
+                commonResourceParameters.PageNumber,
+                commonResourceParameters.PageSize);
         }
 
         public bool Save()

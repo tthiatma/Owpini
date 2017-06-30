@@ -16,6 +16,10 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Owpini.EntityFramework.SeedData;
 using Owpini.Core.Businesses.Dtos;
 using Owpini.Core.Businesses;
+using Owpini.Core.OwpiniUsers;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Owpini.Core.OwpiniEvents;
+using Owpini.Core.OwpiniEvents.Dtos;
 
 namespace Owpini.API
 {
@@ -38,6 +42,11 @@ namespace Owpini.API
         {
             services.AddDbContext<OwpiniDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+
+            services.AddIdentity<OwpiniUser, IdentityRole>()
+                .AddEntityFrameworkStores<OwpiniDbContext>()
+                .AddDefaultTokenProviders();            
 
             services.AddScoped<IOwpiniRepository, OwpiniRepository>();
 
@@ -74,7 +83,12 @@ namespace Owpini.API
                 cfg.CreateMap<BusinessForCreationDto, Business>();
                 cfg.CreateMap<BusinessForUpdateDto, Business>();
 
+                cfg.CreateMap<OwpiniEvent, OwpiniEventDto>();
+                cfg.CreateMap<OwpiniEventDto, OwpiniEvent>();
+
             });
+
+            app.UseIdentity();
 
             owpiniDbContext.EnsureSeedDataForContext();
 

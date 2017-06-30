@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Owpini.Core.Reviews;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Owpini.Core.Businesses
@@ -38,5 +40,7 @@ namespace Owpini.Core.Businesses
 
         public string WebAddress { get; set; }
 
+        public ICollection<Review> Reviews { get; set; }
+        = new List<Review>();
     }
 }

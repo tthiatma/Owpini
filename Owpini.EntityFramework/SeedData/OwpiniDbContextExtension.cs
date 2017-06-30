@@ -1,4 +1,5 @@
 ﻿using Owpini.Core.Businesses;
+using Owpini.Core.OwpiniEvents;
 using System;
 using System.Collections.Generic;
 
@@ -9,7 +10,28 @@ namespace Owpini.EntityFramework.SeedData
         public static void EnsureSeedDataForContext(this OwpiniDbContext context)
         {
             context.Businesses.RemoveRange(context.Businesses);
+            context.OwpiniEvents.RemoveRange(context.OwpiniEvents);
+
             context.SaveChanges();
+
+            var events = new List<OwpiniEvent>()
+            {
+                new OwpiniEvent{
+                    Id = new Guid("11f0e117-155e-461c-80d4-1292bc6d5ac0"),
+                    Description = "d super duper long marathon",
+                    Name = "a GOGO Marathon"
+                },
+                new OwpiniEvent{
+                    Id = new Guid("23d2c3d4-9f90-4e86-ae2c-d27d25e6a679"),
+                    Description = "e nice hawaii trip",
+                    Name = "b Green Trip"
+                },
+                new OwpiniEvent{
+                    Id = new Guid("5b74edd4-8645-4211-92d9-16ae01211b78"),
+                    Description = "f boring meetup ever",
+                    Name = "c failed meetup"
+                },
+            };
 
             var businesses = new List<Business>()
             {
@@ -50,6 +72,7 @@ namespace Owpini.EntityFramework.SeedData
                 }
             };
 
+            context.OwpiniEvents.AddRange(events);
             context.Businesses.AddRange(businesses);
             context.SaveChanges();
         }

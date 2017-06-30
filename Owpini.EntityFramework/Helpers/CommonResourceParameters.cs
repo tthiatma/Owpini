@@ -1,6 +1,6 @@
-﻿namespace Owpini.API.Helpers
+﻿namespace Owpini.EntityFramework.Helpers
 {
-    public class BusinessesResourceParameters
+    public class CommonResourceParameters
     {
         const int maxPageSize = 20;
         public int PageNumber { get; set; } = 1;

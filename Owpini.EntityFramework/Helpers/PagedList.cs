@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Owpini.API.Helpers
+namespace Owpini.EntityFramework.Helpers
 {
     public class PagedList<T> : List<T>
     {

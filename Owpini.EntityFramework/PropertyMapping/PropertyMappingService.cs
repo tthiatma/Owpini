@@ -13,7 +13,7 @@ namespace Owpini.EntityFramework
            new Dictionary<string, PropertyMappingValue>(StringComparer.OrdinalIgnoreCase)
            {
                { "Id", new PropertyMappingValue(new List<string>() { "Id" } ) },
-               //{ "Genre", new PropertyMappingValue(new List<string>() { "Genre" } )},
+               { "Description", new PropertyMappingValue(new List<string>() { "Description" } )},
                //{ "Age", new PropertyMappingValue(new List<string>() { "DateOfBirth" } , true) },
                { "Name", new PropertyMappingValue(new List<string>() { "Name" }) }
            };

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Owpini.EntityFramework;
+using Owpini.EntityFramework.Helpers;
 
 namespace Owpini.API.Controllers
 {
@@ -33,27 +34,27 @@ namespace Owpini.API.Controllers
 
         // GET api/values
         [HttpGet(Name = "GetBusinesses")]
-        public IActionResult GetBusinesses(BusinessesResourceParameters bizResourceParam)
+        public IActionResult GetBusinesses(CommonResourceParameters comResourceParam)
         {
             if (!_propertyMappingService.ValidMappingExistsFor<BusinessDto, Business>
-               (bizResourceParam.OrderBy))
+               (comResourceParam.OrderBy))
             {
                 return BadRequest();
             }
 
             if (!_typeHelperService.TypeHasProperties<BusinessDto>
-                (bizResourceParam.Fields))
+                (comResourceParam.Fields))
             {
                 return BadRequest();
             }
 
-            var businessesFromRepo = _owpiniRepository.GetBusinesses(bizResourceParam);
+            var businessesFromRepo = _owpiniRepository.GetBusinesses(comResourceParam);
 
             var previousPageLink = businessesFromRepo.HasPrevious ?
-                CreateBusinessesResourceUri(bizResourceParam, ResourceUriType.PreviousPage) : null;
+                ResourceUri.CreateResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.PreviousPage) : null;
 
             var nextPageLink = businessesFromRepo.HasNext ?
-                CreateBusinessesResourceUri(bizResourceParam, ResourceUriType.NextPage) : null;
+                ResourceUri.CreateResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.NextPage) : null;
 
             var paginationMetaData = new
             {
@@ -231,43 +232,6 @@ namespace Owpini.API.Controllers
             }
 
             return NoContent();
-        }
-
-        private string CreateBusinessesResourceUri(
-            BusinessesResourceParameters businessesResourceParameters,
-            ResourceUriType type)
-        {
-            switch (type)
-            {
-                case ResourceUriType.PreviousPage:
-                    return _urlHelper.Link("GetBusinesses",
-                      new
-                      {
-                          orderBy = businessesResourceParameters.OrderBy,
-                          searchQuery = businessesResourceParameters.SearchQuery,
-                          pageNumber = businessesResourceParameters.PageNumber - 1,
-                          pageSize = businessesResourceParameters.PageSize
-                      });
-                case ResourceUriType.NextPage:
-                    return _urlHelper.Link("GetBusinesses",
-                      new
-                      {
-                          orderBy = businessesResourceParameters.OrderBy,
-                          searchQuery = businessesResourceParameters.SearchQuery,
-                          pageNumber = businessesResourceParameters.PageNumber + 1,
-                          pageSize = businessesResourceParameters.PageSize
-                      });
-
-                default:
-                    return _urlHelper.Link("GetBusinesses",
-                    new
-                    {
-                        orderBy = businessesResourceParameters.OrderBy,
-                        searchQuery = businessesResourceParameters.SearchQuery,
-                        pageNumber = businessesResourceParameters.PageNumber,
-                        pageSize = businessesResourceParameters.PageSize
-                    });
-            }
-        }
+        }        
     }
 }
