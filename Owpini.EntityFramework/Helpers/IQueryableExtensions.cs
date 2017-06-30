@@ -57,7 +57,7 @@ namespace Owpini.EntityFramework.Helpers
                     {
                         orderDescending = !orderDescending;
                     }
-                    source = source.OrderBy(destinationProperty + (orderDescending ? "descending" : "ascending"));
+                    source = source.OrderBy(destinationProperty + (orderDescending ? " descending" : " ascending"));
 
                 }
             }

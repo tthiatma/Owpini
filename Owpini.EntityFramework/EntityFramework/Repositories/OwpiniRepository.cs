@@ -3,16 +3,20 @@ using Owpini.Core.Businesses;
 using System.Linq;
 using System.Collections.Generic;
 using Owpini.API.Helpers;
+using Owpini.Core.Businesses.Dtos;
+using Owpini.EntityFramework.Helpers;
 
 namespace Owpini.EntityFramework.EntityFramework.Repositories
 {
     public class OwpiniRepository : IOwpiniRepository
     {
         private OwpiniDbContext _context;
+        private IPropertyMappingService _propertyMappingService;
 
-        public OwpiniRepository(OwpiniDbContext context)
+        public OwpiniRepository(OwpiniDbContext context, IPropertyMappingService propertyMappingService)
         {
             _context = context;
+            _propertyMappingService = propertyMappingService;
         }
 
         public void AddBusiness(Business business)
@@ -39,9 +43,7 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
         public PagedList<Business> GetBusinesses(BusinessesResourceParameters businessResourceParameters)
         {
             var collectionBeforePaging =
-                _context.Businesses
-                .OrderBy(b => b.Name)
-                .AsQueryable();
+                _context.Businesses.ApplySort(businessResourceParameters.OrderBy, _propertyMappingService.GetPropertyMapping<BusinessDto, Business>());
 
             if (!string.IsNullOrEmpty(businessResourceParameters.SearchQuery))
             {

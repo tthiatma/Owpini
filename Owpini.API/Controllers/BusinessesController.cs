@@ -8,6 +8,7 @@ using Owpini.API.Helpers;
 using Microsoft.AspNetCore.JsonPatch;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Owpini.EntityFramework;
 
 namespace Owpini.API.Controllers
 {
@@ -16,17 +17,36 @@ namespace Owpini.API.Controllers
     {
         private IOwpiniRepository _owpiniRepository;
         private IUrlHelper _urlHelper;
+        private IPropertyMappingService _propertyMappingService;
+        private ITypeHelperService _typeHelperService;
 
-        public BusinessesController(IOwpiniRepository owpiniRepository, IUrlHelper urlHelper)
+        public BusinessesController(IOwpiniRepository owpiniRepository, 
+            IUrlHelper urlHelper, 
+            IPropertyMappingService propertyMappingService,
+            ITypeHelperService typeHelperService)
         {
             _owpiniRepository = owpiniRepository;
             _urlHelper = urlHelper;
+            _propertyMappingService = propertyMappingService;
+            _typeHelperService = typeHelperService;
         }
 
         // GET api/values
         [HttpGet(Name = "GetBusinesses")]
         public IActionResult GetBusinesses(BusinessesResourceParameters bizResourceParam)
         {
+            if (!_propertyMappingService.ValidMappingExistsFor<BusinessDto, Business>
+               (bizResourceParam.OrderBy))
+            {
+                return BadRequest();
+            }
+
+            if (!_typeHelperService.TypeHasProperties<BusinessDto>
+                (bizResourceParam.Fields))
+            {
+                return BadRequest();
+            }
+
             var businessesFromRepo = _owpiniRepository.GetBusinesses(bizResourceParam);
 
             var previousPageLink = businessesFromRepo.HasPrevious ?
@@ -223,6 +243,7 @@ namespace Owpini.API.Controllers
                     return _urlHelper.Link("GetBusinesses",
                       new
                       {
+                          orderBy = businessesResourceParameters.OrderBy,
                           searchQuery = businessesResourceParameters.SearchQuery,
                           pageNumber = businessesResourceParameters.PageNumber - 1,
                           pageSize = businessesResourceParameters.PageSize
@@ -231,6 +252,7 @@ namespace Owpini.API.Controllers
                     return _urlHelper.Link("GetBusinesses",
                       new
                       {
+                          orderBy = businessesResourceParameters.OrderBy,
                           searchQuery = businessesResourceParameters.SearchQuery,
                           pageNumber = businessesResourceParameters.PageNumber + 1,
                           pageSize = businessesResourceParameters.PageSize
@@ -240,6 +262,7 @@ namespace Owpini.API.Controllers
                     return _urlHelper.Link("GetBusinesses",
                     new
                     {
+                        orderBy = businessesResourceParameters.OrderBy,
                         searchQuery = businessesResourceParameters.SearchQuery,
                         pageNumber = businessesResourceParameters.PageNumber,
                         pageSize = businessesResourceParameters.PageSize
