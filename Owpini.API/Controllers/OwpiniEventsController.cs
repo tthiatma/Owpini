@@ -1,14 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Owpini.EntityFramework.EntityFramework.Repositories;
 using AutoMapper;
-using Owpini.Core.Businesses.Dtos;
 using Owpini.API.Helpers;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Owpini.EntityFramework;
 using Owpini.EntityFramework.Helpers;
 using Owpini.Core.OwpiniEvents.Dtos;
-using Owpini.Core.OwpiniEvents;
 
 namespace Owpini.API.Controllers
 {
@@ -35,18 +33,6 @@ namespace Owpini.API.Controllers
         [HttpGet(Name = "GetOwpiniEvents")]
         public IActionResult GetOwpiniEvents(CommonResourceParameters comResourceParam)
         {
-            //if (!_propertyMappingService.ValidMappingExistsFor<OwpiniEventDto, OwpiniEvent>
-            //   (comResourceParam.OrderBy))
-            //{
-            //    return BadRequest();
-            //}
-
-            //if (!_typeHelperService.TypeHasProperties<OwpiniEventDto>
-            //    (comResourceParam.Fields))
-            //{
-            //    return BadRequest();
-            //}
-
             var owEventsFromRepo = _owpiniRepository.GetOwpiniEvents(comResourceParam);
 
             var previousPageLink = owEventsFromRepo.HasPrevious ?

@@ -70,12 +70,17 @@ namespace Owpini.API.Controllers
                 JsonConvert.SerializeObject(paginationMetaData));
 
             var businesses = Mapper.Map<IEnumerable<BusinessDto>>(businessesFromRepo);
-            return Ok(businesses);
+            return Ok(businesses.ShapeData(comResourceParam.Fields));
         }
 
         [HttpGet("{id}", Name = "GetBusiness")]
-        public IActionResult GetBusiness(Guid id)
+        public IActionResult GetBusiness(Guid id, [FromQuery] string fields)
         {
+            if (!_typeHelperService.TypeHasProperties<BusinessDto>(fields))
+            {
+                return BadRequest();
+            }
+
             var businessFromRepo = _owpiniRepository.GetBusiness(id);
 
             if (businessFromRepo == null)
@@ -84,8 +89,7 @@ namespace Owpini.API.Controllers
             }
 
             var author = Mapper.Map<BusinessDto>(businessFromRepo);
-            return Ok(author);
-
+            return Ok(author.ShapeData(fields));
         }
 
         [HttpPost]

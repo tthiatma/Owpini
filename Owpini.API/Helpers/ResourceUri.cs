@@ -1,9 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Owpini.EntityFramework.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Owpini.API.Helpers
 {
@@ -21,6 +17,7 @@ namespace Owpini.API.Helpers
                     return urlHelper.Link(getUrl,
                       new
                       {
+                          fields = commonResourceParameters.Fields,
                           orderBy = commonResourceParameters.OrderBy,
                           searchQuery = commonResourceParameters.SearchQuery,
                           pageNumber = commonResourceParameters.PageNumber - 1,
@@ -30,6 +27,7 @@ namespace Owpini.API.Helpers
                     return urlHelper.Link(getUrl,
                       new
                       {
+                          fields = commonResourceParameters.Fields,
                           orderBy = commonResourceParameters.OrderBy,
                           searchQuery = commonResourceParameters.SearchQuery,
                           pageNumber = commonResourceParameters.PageNumber + 1,
@@ -40,6 +38,7 @@ namespace Owpini.API.Helpers
                     return urlHelper.Link(getUrl,
                     new
                     {
+                        fields = commonResourceParameters.Fields,
                         orderBy = commonResourceParameters.OrderBy,
                         searchQuery = commonResourceParameters.SearchQuery,
                         pageNumber = commonResourceParameters.PageNumber,

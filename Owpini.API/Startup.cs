@@ -20,6 +20,8 @@ using Owpini.Core.OwpiniUsers;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Owpini.Core.OwpiniEvents;
 using Owpini.Core.OwpiniEvents.Dtos;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Newtonsoft.Json.Serialization;
 
 namespace Owpini.API
 {
@@ -43,7 +45,6 @@ namespace Owpini.API
             services.AddDbContext<OwpiniDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-
             services.AddIdentity<OwpiniUser, IdentityRole>()
                 .AddEntityFrameworkStores<OwpiniDbContext>()
                 .AddDefaultTokenProviders();            
@@ -63,7 +64,15 @@ namespace Owpini.API
             services.AddTransient<ITypeHelperService, TypeHelperService>();
 
             // Add framework services.
-            services.AddMvc();
+            services.AddMvc(setupAction => {
+                setupAction.ReturnHttpNotAcceptable = true;
+                setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                setupAction.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
+            })
+            .AddJsonOptions(options => {
+                options.SerializerSettings.ContractResolver =
+                new CamelCasePropertyNamesContractResolver();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
