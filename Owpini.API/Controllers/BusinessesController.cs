@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Owpini.EntityFramework;
 using Owpini.EntityFramework.Helpers;
+using System.Linq;
+using Owpini.Core.Hateoas.Dtos;
 
 namespace Owpini.API.Controllers
 {
@@ -50,27 +52,50 @@ namespace Owpini.API.Controllers
 
             var businessesFromRepo = _owpiniRepository.GetBusinesses(comResourceParam);
 
-            var previousPageLink = businessesFromRepo.HasPrevious ?
-                ResourceUri.CreateResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.PreviousPage) : null;
+            var businesses = Mapper.Map<IEnumerable<BusinessDto>>(businessesFromRepo);
 
-            var nextPageLink = businessesFromRepo.HasNext ?
-                ResourceUri.CreateResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.NextPage) : null;
+            //var previousPageLink = businessesFromRepo.HasPrevious ?
+            //    CreateBusinessResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.PreviousPage) : null;
+
+            //var nextPageLink = businessesFromRepo.HasNext ?
+            //    CreateBusinessResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.NextPage) : null;
 
             var paginationMetaData = new
             {
                 totalCount = businessesFromRepo.TotalCount,
                 pageSize = businessesFromRepo.PageSize,
                 currentPage = businessesFromRepo.CurrentPage,
-                totalPages = businessesFromRepo.TotalPages,
-                previousPageLink = previousPageLink,
-                nextPageLink = nextPageLink
+                totalPages = businessesFromRepo.TotalPages
+                //previousPageLink = previousPageLink,
+                //nextPageLink = nextPageLink
             };
 
             Response.Headers.Add("X-Pagination",
                 JsonConvert.SerializeObject(paginationMetaData));
 
-            var businesses = Mapper.Map<IEnumerable<BusinessDto>>(businessesFromRepo);
-            return Ok(businesses.ShapeData(comResourceParam.Fields));
+            var links = CreateLinksForBusinesses(comResourceParam,
+                businessesFromRepo.HasNext, businessesFromRepo.HasPrevious);
+
+            var shapedBusinesses = businesses.ShapeData(comResourceParam.Fields);
+
+            var shapedBusinessesWithLinks = shapedBusinesses.Select(biz =>
+            {
+            var bizAsDictionary = biz as IDictionary<string, object>;
+                var businessLinks = CreateLinksForBusiness(
+                    (Guid)bizAsDictionary["Id"], comResourceParam.Fields);
+
+                bizAsDictionary.Add("links", businessLinks);
+
+                return bizAsDictionary;
+            });
+
+            var linkedCollectionResource = new
+            {
+                value = shapedBusinessesWithLinks,
+                links = links
+            };
+
+            return Ok(linkedCollectionResource);
         }
 
         [HttpGet("{id}", Name = "GetBusiness")]
@@ -88,11 +113,45 @@ namespace Owpini.API.Controllers
                 return NotFound();
             }
 
-            var author = Mapper.Map<BusinessDto>(businessFromRepo);
-            return Ok(author.ShapeData(fields));
+            var business = Mapper.Map<BusinessDto>(businessFromRepo);
+
+            var links = CreateLinksForBusiness(id, fields);
+
+            var linkedResourceToReturn = business.ShapeData(fields)
+                as IDictionary<string, object>;
+
+            linkedResourceToReturn.Add("links", links);
+
+            return Ok(linkedResourceToReturn);
         }
 
-        [HttpPost]
+        [HttpDelete("{id}", Name = "DeleteBusiness")]
+        public IActionResult DeleteBusiness(Guid id)
+        {
+            if (!_owpiniRepository.BusinessExists(id))
+            {
+                return NotFound();
+            }
+
+            var bizFromRepo = _owpiniRepository.GetBusiness(id);
+            if (bizFromRepo == null)
+            {
+                return NotFound();
+            }
+
+            _owpiniRepository.DeleteBusiness(bizFromRepo);
+
+            if (!_owpiniRepository.Save())
+            {
+                throw new Exception($"Deleting business {id} failed on save.");
+            }
+
+            //_logger.LogInformation(100, $"business {id} was deleted.");
+
+            return NoContent();
+        }
+
+        [HttpPost(Name ="CreateBusiness")]
         public IActionResult CreateBusiness([FromBody] BusinessForCreationDto business)
         {
             if (business == null)
@@ -116,7 +175,7 @@ namespace Owpini.API.Controllers
                 businessToReturn);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id}", Name = "UpdateBusiness")]
         public IActionResult UpdateBusiness(Guid id, [FromBody] BusinessForUpdateDto business)
         {
             if (business == null)
@@ -166,7 +225,7 @@ namespace Owpini.API.Controllers
             return NoContent();
         }
 
-        [HttpPatch("{id}")]
+        [HttpPatch("{id}", Name = "PartiallyUpdateBusiness")]
         public IActionResult PartiallyUpdateBusiness(Guid id, 
             [FromBody] JsonPatchDocument<BusinessForUpdateDto> patchDoc)
         {
@@ -236,6 +295,108 @@ namespace Owpini.API.Controllers
             }
 
             return NoContent();
-        }        
+        }
+
+        private IEnumerable<LinkDto> CreateLinksForBusinesses(
+            CommonResourceParameters comResourceParameters,
+            bool hasNext, bool hasPrevious)
+        {
+            var links = new List<LinkDto>();
+
+            // self 
+            links.Add(
+               new LinkDto(CreateBusinessResourceUri(comResourceParameters,
+               ResourceUriType.Current), 
+               "self", "GET"));
+
+            if (hasNext)
+            {
+                links.Add(
+                  new LinkDto(CreateBusinessResourceUri(comResourceParameters,
+                  ResourceUriType.NextPage),
+                  "nextPage", "GET"));
+            }
+
+            if (hasPrevious)
+            {
+                links.Add(
+                    new LinkDto(CreateBusinessResourceUri(comResourceParameters,
+                    ResourceUriType.PreviousPage),
+                    "previousPage", "GET"));
+            }
+
+            return links;
+        }
+        private IEnumerable<LinkDto> CreateLinksForBusiness(Guid id, string fields)
+        {
+            var links = new List<LinkDto>();
+
+            if (string.IsNullOrWhiteSpace(fields))
+            {
+                links.Add(
+                  new LinkDto(_urlHelper.Link("GetBusiness", new { id = id }),
+                  "self",
+                  "GET"));
+            }
+            else
+            {
+                links.Add(
+                  new LinkDto(_urlHelper.Link("GetBusiness", new { id = id, fields = fields }),
+                  "self",
+                  "GET"));
+            }
+
+            links.Add(
+              new LinkDto(_urlHelper.Link("DeleteBusiness", new { id = id }),
+              "delete_business",
+              "DELETE"));
+
+            links.Add(
+             new LinkDto(_urlHelper.Link("UpdateBusiness", new { id = id }),
+             "update_business",
+             "UPDATE"));
+
+            return links;
+        }
+
+        private string CreateBusinessResourceUri(
+            CommonResourceParameters commonResourceParameters,
+            ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage:
+                    return _urlHelper.Link("GetBusinesses",
+                      new
+                      {
+                          fields = commonResourceParameters.Fields,
+                          orderBy = commonResourceParameters.OrderBy,
+                          searchQuery = commonResourceParameters.SearchQuery,
+                          pageNumber = commonResourceParameters.PageNumber - 1,
+                          pageSize = commonResourceParameters.PageSize
+                      });
+                case ResourceUriType.NextPage:
+                    return _urlHelper.Link("GetBusinesses",
+                      new
+                      {
+                          fields = commonResourceParameters.Fields,
+                          orderBy = commonResourceParameters.OrderBy,
+                          searchQuery = commonResourceParameters.SearchQuery,
+                          pageNumber = commonResourceParameters.PageNumber + 1,
+                          pageSize = commonResourceParameters.PageSize
+                      });
+                case ResourceUriType.Current:
+                default:
+                    return _urlHelper.Link("GetBusinesses",
+                    new
+                    {
+                        fields = commonResourceParameters.Fields,
+                        orderBy = commonResourceParameters.OrderBy,
+                        searchQuery = commonResourceParameters.SearchQuery,
+                        pageNumber = commonResourceParameters.PageNumber,
+                        pageSize = commonResourceParameters.PageSize
+                    });
+            }
+        }
     }
 }

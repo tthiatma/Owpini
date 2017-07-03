@@ -16,6 +16,7 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
         void AddBusiness(Business business);
         void UpdateBusiness(Business business);
         bool BusinessExists(Guid businessId);
+        void DeleteBusiness(Business business);
         bool Save();
 
     }

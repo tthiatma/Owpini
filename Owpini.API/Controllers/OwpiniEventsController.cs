@@ -30,32 +30,9 @@ namespace Owpini.API.Controllers
         }
 
         // GET api/values
-        [HttpGet(Name = "GetOwpiniEvents")]
-        public IActionResult GetOwpiniEvents(CommonResourceParameters comResourceParam)
-        {
-            var owEventsFromRepo = _owpiniRepository.GetOwpiniEvents(comResourceParam);
-
-            var previousPageLink = owEventsFromRepo.HasPrevious ?
-                ResourceUri.CreateResourceUri("GetOwpiniEvents", _urlHelper, comResourceParam, ResourceUriType.PreviousPage) : null;
-
-            var nextPageLink = owEventsFromRepo.HasNext ?
-                ResourceUri.CreateResourceUri("GetOwpiniEvents", _urlHelper, comResourceParam, ResourceUriType.NextPage) : null;
-
-            var paginationMetaData = new
-            {
-                totalCount = owEventsFromRepo.TotalCount,
-                pageSize = owEventsFromRepo.PageSize,
-                currentPage = owEventsFromRepo.CurrentPage,
-                totalPages = owEventsFromRepo.TotalPages,
-                previousPageLink = previousPageLink,
-                nextPageLink = nextPageLink
-            };
-
-            Response.Headers.Add("X-Pagination",
-                JsonConvert.SerializeObject(paginationMetaData));
-
-            var events = Mapper.Map<IEnumerable<OwpiniEventDto>>(owEventsFromRepo);
-            return Ok(events);
-        }     
+        //[HttpGet(Name = "GetOwpiniEvents")]
+        //public IActionResult GetOwpiniEvents(CommonResourceParameters comResourceParam)
+        //{
+        //}     
     }
 }

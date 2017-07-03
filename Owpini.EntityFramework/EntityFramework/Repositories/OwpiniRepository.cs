@@ -31,6 +31,11 @@ namespace Owpini.EntityFramework.EntityFramework.Repositories
             return _context.Businesses.Any(b => b.Id == businessId);
         }
 
+        public void DeleteBusiness(Business business)
+        {
+            _context.Businesses.Remove(business);
+        }
+
         public Business GetBusiness(Guid businessId)
         {
             return _context.Businesses.FirstOrDefault(b => b.Id == businessId);

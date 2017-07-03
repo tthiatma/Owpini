@@ -8,6 +8,7 @@ namespace Owpini.API.Helpers
     public enum ResourceUriType
     {
         PreviousPage,
-        NextPage
+        NextPage,
+        Current
     }
 }
