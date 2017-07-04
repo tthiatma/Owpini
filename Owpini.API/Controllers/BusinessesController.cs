@@ -12,6 +12,7 @@ using Owpini.EntityFramework;
 using Owpini.EntityFramework.Helpers;
 using System.Linq;
 using Owpini.Core.Hateoas.Dtos;
+using Microsoft.Extensions.Logging;
 
 namespace Owpini.API.Controllers
 {
@@ -22,16 +23,19 @@ namespace Owpini.API.Controllers
         private IUrlHelper _urlHelper;
         private IPropertyMappingService _propertyMappingService;
         private ITypeHelperService _typeHelperService;
+        private ILogger<BusinessesController> _logger;
 
         public BusinessesController(IOwpiniRepository owpiniRepository, 
             IUrlHelper urlHelper, 
             IPropertyMappingService propertyMappingService,
-            ITypeHelperService typeHelperService)
+            ITypeHelperService typeHelperService,
+            ILogger<BusinessesController> logger)
         {
             _owpiniRepository = owpiniRepository;
             _urlHelper = urlHelper;
             _propertyMappingService = propertyMappingService;
             _typeHelperService = typeHelperService;
+            _logger = logger;
         }
 
         // GET api/values
@@ -146,7 +150,7 @@ namespace Owpini.API.Controllers
                 throw new Exception($"Deleting business {id} failed on save.");
             }
 
-            //_logger.LogInformation(100, $"business {id} was deleted.");
+            _logger.LogInformation(100, $"business {id} was deleted.");
 
             return NoContent();
         }

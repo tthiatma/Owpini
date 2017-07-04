@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,10 +14,16 @@ using Owpini.Core.Businesses.Dtos;
 using Owpini.Core.Businesses;
 using Owpini.Core.OwpiniUsers;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using NLog.Extensions.Logging;
 using Owpini.Core.OwpiniEvents;
 using Owpini.Core.OwpiniEvents.Dtos;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Newtonsoft.Json.Serialization;
+using AspNetCoreRateLimit;
+using System.Collections.Generic;
+using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.AspNetCore.Http;
+using NLog.Web;
 
 namespace Owpini.API
 {
@@ -34,6 +36,7 @@ namespace Owpini.API
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
+
             Configuration = builder.Build();
         }
 
@@ -47,21 +50,15 @@ namespace Owpini.API
 
             services.AddIdentity<OwpiniUser, IdentityRole>()
                 .AddEntityFrameworkStores<OwpiniDbContext>()
-                .AddDefaultTokenProviders();            
+                .AddDefaultTokenProviders();
 
-            services.AddScoped<IOwpiniRepository, OwpiniRepository>();
+            services.AddResponseCaching();
 
-            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
-
-            services.AddScoped<IUrlHelper>(implementationFactory =>
+            services.AddSwaggerGen(setupAction =>
             {
-                var actionContext = implementationFactory.GetService<IActionContextAccessor>()
-                .ActionContext;
-                return new UrlHelper(actionContext);
+                setupAction.SwaggerDoc("OwpiniApi",
+                    new Info { Title = "Owpini API Documentation" });
             });
-
-            services.AddTransient<IPropertyMappingService, PropertyMappingService>();
-            services.AddTransient<ITypeHelperService, TypeHelperService>();
 
             // Add framework services.
             services.AddMvc(setupAction => {
@@ -73,6 +70,44 @@ namespace Owpini.API
                 options.SerializerSettings.ContractResolver =
                 new CamelCasePropertyNamesContractResolver();
             });
+
+            services.AddMemoryCache();
+
+            services.Configure<IpRateLimitOptions>((options) =>
+            {
+                options.GeneralRules = new List<RateLimitRule>()
+                {
+                    new RateLimitRule()
+                    {
+                        Endpoint = "*",
+                        Limit = 1000,
+                        Period = "5m"
+                    },
+                    new RateLimitRule()
+                    {
+                        Endpoint = "*",
+                        Limit = 200,
+                        Period = "10s"
+                    }
+                };
+            });
+
+            services.AddScoped<IOwpiniRepository, OwpiniRepository>();
+            services.AddScoped<IUrlHelper>(implementationFactory =>
+            {
+                var actionContext = implementationFactory.GetService<IActionContextAccessor>()
+                .ActionContext;
+                return new UrlHelper(actionContext);
+            });
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+            services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+            services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+
+            services.AddTransient<IPropertyMappingService, PropertyMappingService>();
+            services.AddTransient<ITypeHelperService, TypeHelperService>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -81,8 +116,15 @@ namespace Owpini.API
             ILoggerFactory loggerFactory,
             OwpiniDbContext owpiniDbContext)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            app.UseIdentity();
+
+            loggerFactory.AddNLog();
+
+            app.AddNLogWeb();
+
+            env.ConfigureNLog("nlog.config");
+
+            app.UseResponseCaching();
 
             AutoMapper.Mapper.Initialize(cfg =>
             {
@@ -97,11 +139,18 @@ namespace Owpini.API
 
             });
 
-            app.UseIdentity();
-
             owpiniDbContext.EnsureSeedDataForContext();
 
+            app.UseIpRateLimiting();
+
             app.UseMvc();
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/OwpiniApi/swagger.json", "Owpini API");
+            });
         }
     }
 }
