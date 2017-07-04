@@ -40,7 +40,8 @@ namespace Owpini.API.Controllers
 
         // GET api/values
         [HttpGet(Name = "GetBusinesses")]
-        public IActionResult GetBusinesses(CommonResourceParameters comResourceParam)
+        public IActionResult GetBusinesses(CommonResourceParameters comResourceParam,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
             if (!_propertyMappingService.ValidMappingExistsFor<BusinessDto, Business>
                (comResourceParam.OrderBy))
@@ -58,52 +59,71 @@ namespace Owpini.API.Controllers
 
             var businesses = Mapper.Map<IEnumerable<BusinessDto>>(businessesFromRepo);
 
-            //var previousPageLink = businessesFromRepo.HasPrevious ?
-            //    CreateBusinessResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.PreviousPage) : null;
-
-            //var nextPageLink = businessesFromRepo.HasNext ?
-            //    CreateBusinessResourceUri("GetBusinesses", _urlHelper, comResourceParam, ResourceUriType.NextPage) : null;
-
-            var paginationMetaData = new
+            if (mediaType == "application/vnd.owpini.hateoas+json")
             {
+                var paginationMetaData = new
+                {
+                    totalCount = businessesFromRepo.TotalCount,
+                    pageSize = businessesFromRepo.PageSize,
+                    currentPage = businessesFromRepo.CurrentPage,
+                    totalPages = businessesFromRepo.TotalPages
+                };
+
+                Response.Headers.Add("X-Pagination",
+                    JsonConvert.SerializeObject(paginationMetaData));
+
+                var links = CreateLinksForBusinesses(comResourceParam,
+                    businessesFromRepo.HasNext, businessesFromRepo.HasPrevious);
+
+                var shapedBusinesses = businesses.ShapeData(comResourceParam.Fields);
+
+                var shapedBusinessesWithLinks = shapedBusinesses.Select(biz =>
+                {
+                    var bizAsDictionary = biz as IDictionary<string, object>;
+                    var businessLinks = CreateLinksForBusiness(
+                        (Guid)bizAsDictionary["Id"], comResourceParam.Fields);
+
+                    bizAsDictionary.Add("links", businessLinks);
+
+                    return bizAsDictionary;
+                });
+
+                var linkedCollectionResource = new
+                {
+                    value = shapedBusinessesWithLinks,
+                    links = links
+                };
+
+                return Ok(linkedCollectionResource);
+            }
+
+            var previousPageLink = businessesFromRepo.HasPrevious ?
+                CreateBusinessResourceUri(comResourceParam, ResourceUriType.PreviousPage) : null;
+
+            var nextPageLink = businessesFromRepo.HasNext ?
+                CreateBusinessResourceUri(comResourceParam, ResourceUriType.NextPage) : null;
+
+            var paginationMetadata = new
+            {
+                previousPageLink = previousPageLink,
+                nextPageLink = nextPageLink,
                 totalCount = businessesFromRepo.TotalCount,
                 pageSize = businessesFromRepo.PageSize,
                 currentPage = businessesFromRepo.CurrentPage,
                 totalPages = businessesFromRepo.TotalPages
-                //previousPageLink = previousPageLink,
-                //nextPageLink = nextPageLink
             };
 
             Response.Headers.Add("X-Pagination",
-                JsonConvert.SerializeObject(paginationMetaData));
+                Newtonsoft.Json.JsonConvert.SerializeObject(paginationMetadata));
 
-            var links = CreateLinksForBusinesses(comResourceParam,
-                businessesFromRepo.HasNext, businessesFromRepo.HasPrevious);
+            return Ok(businesses.ShapeData(comResourceParam.Fields));
 
-            var shapedBusinesses = businesses.ShapeData(comResourceParam.Fields);
-
-            var shapedBusinessesWithLinks = shapedBusinesses.Select(biz =>
-            {
-            var bizAsDictionary = biz as IDictionary<string, object>;
-                var businessLinks = CreateLinksForBusiness(
-                    (Guid)bizAsDictionary["Id"], comResourceParam.Fields);
-
-                bizAsDictionary.Add("links", businessLinks);
-
-                return bizAsDictionary;
-            });
-
-            var linkedCollectionResource = new
-            {
-                value = shapedBusinessesWithLinks,
-                links = links
-            };
-
-            return Ok(linkedCollectionResource);
         }
 
         [HttpGet("{id}", Name = "GetBusiness")]
-        public IActionResult GetBusiness(Guid id, [FromQuery] string fields)
+        public IActionResult GetBusiness(Guid id, 
+            [FromQuery] string fields, 
+            [FromHeader(Name = "Accept")] string mediaType)
         {
             if (!_typeHelperService.TypeHasProperties<BusinessDto>(fields))
             {

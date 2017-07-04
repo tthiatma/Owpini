@@ -24,6 +24,8 @@ using System.Collections.Generic;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.AspNetCore.Http;
 using NLog.Web;
+using System.Linq;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace Owpini.API
 {
@@ -45,6 +47,41 @@ namespace Owpini.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvc(setupAction => {
+                setupAction.ReturnHttpNotAcceptable = true;
+                setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+
+                var xmlDataContractSerializerInputFormatter =
+                new XmlDataContractSerializerInputFormatter();
+
+                xmlDataContractSerializerInputFormatter.SupportedMediaTypes
+                .Add("application/vnd.owpini.full+xml");
+
+                setupAction.InputFormatters.Add(xmlDataContractSerializerInputFormatter);
+
+                var jsonInputFormatter = setupAction.InputFormatters
+                .OfType<JsonInputFormatter>().FirstOrDefault();
+
+                if (jsonInputFormatter != null)
+                {
+                    jsonInputFormatter.SupportedMediaTypes
+                    .Add("application/vnd.owpini.business.full+json");
+                }
+
+                var jsonOutputFormatter = setupAction.OutputFormatters
+                    .OfType<JsonOutputFormatter>().FirstOrDefault();
+
+                if (jsonOutputFormatter != null)
+                {
+                    jsonOutputFormatter.SupportedMediaTypes.Add("application/vnd.owpini.hateoas+json");
+                }
+
+            })
+            .AddJsonOptions(options => {
+                options.SerializerSettings.ContractResolver =
+                new CamelCasePropertyNamesContractResolver();
+            });
+
             services.AddDbContext<OwpiniDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
@@ -60,16 +97,6 @@ namespace Owpini.API
                     new Info { Title = "Owpini API Documentation" });
             });
 
-            // Add framework services.
-            services.AddMvc(setupAction => {
-                setupAction.ReturnHttpNotAcceptable = true;
-                setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
-                setupAction.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
-            })
-            .AddJsonOptions(options => {
-                options.SerializerSettings.ContractResolver =
-                new CamelCasePropertyNamesContractResolver();
-            });
 
             services.AddMemoryCache();
 
@@ -126,6 +153,32 @@ namespace Owpini.API
 
             app.UseResponseCaching();
 
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler(appBuilder =>
+                {
+                    appBuilder.Run(async context =>
+                    {
+                        var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
+                        if (exceptionHandlerFeature != null)
+                        {
+                            var logger = loggerFactory.CreateLogger("Global exception logger");
+                            logger.LogError(500,
+                                exceptionHandlerFeature.Error,
+                                exceptionHandlerFeature.Error.Message);
+                        }
+
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
+
+                    });
+                });
+            }
+
             AutoMapper.Mapper.Initialize(cfg =>
             {
                 cfg.CreateMap<Business, BusinessDto>();
@@ -143,14 +196,14 @@ namespace Owpini.API
 
             app.UseIpRateLimiting();
 
-            app.UseMvc();
-
             app.UseSwagger();
 
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/OwpiniApi/swagger.json", "Owpini API");
             });
+
+            app.UseMvc();
         }
     }
 }
